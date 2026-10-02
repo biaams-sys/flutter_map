@@ -8,7 +8,7 @@ Aplicativo web desenvolvido em Flutter para registrar e acompanhar caminhadas, c
 - **Geolocator** (GPS)
 
 ##  Screenshots
-*(Adicione aqui os prints do seu aplicativo)*
+*prints*
 
 ##  Como Executar
 ```bash
