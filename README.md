@@ -36,17 +36,14 @@ Aplicativo mobile desenvolvido em **Flutter** para rastreamento de caminhadas, c
 
 1. **Clonar o repositório:**
    ```bash
-   git clone [https://github.com/biaams-sys/flutter_map.git](https://github.com/biaams-sys/flutter_map.git)
+   git clone [https://github.com/biaams-sys/flutter_map.git]
    cd flutter_map
-
-```
 
 2. **Instalar as dependências:**
 ```bash
 flutter pub get
 
 ```
-
 
 3. **Executar a aplicação:**
 ```bash
@@ -62,7 +59,7 @@ flutter run
 
 Você pode baixar e instalar a versão compilada do aplicativo diretamente pelo link do repositório:
 
-🔗 **[Baixar app-release.apk](https://www.google.com/search?q=https://github.com/biaams-sys/flutter_map/raw/main/app-release.apk)**
+ **[Baixar app-release.apk](https://www.google.com/search?q=https://github.com/biaams-sys/flutter_map/raw/main/app-release.apk)**
 
 ```
 
