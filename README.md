@@ -59,5 +59,5 @@ flutter run
 
 Você pode baixar e instalar a versão compilada do aplicativo diretamente pelo link do repositório:
 
- **[Baixar app-release.apk](https://github.com/biaams-sys/flutter_map/blob/main/app-release.apk)**
+[**Baixar app-release.apk**](https://github.com/biaams-sys/flutter_map/releases/download/v1.0.0/app-release.apk)
 
