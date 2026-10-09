@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -138,7 +140,9 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
     _controller.forward().then((_) {
-      Navigator.pushReplacementNamed(context, '/home');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     });
   }
 
@@ -250,11 +254,12 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             ListTile(
-              title: const Text('Ver Splash Screen'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/splash');
-              },
+              leading: const Icon(
+                Icons.home_outlined,
+                color: AppColors.primary,
+              ),
+              title: const Text('Início'),
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(
@@ -277,7 +282,9 @@ class HomeScreen extends StatelessWidget {
                 'Sair',
                 style: TextStyle(color: Colors.redAccent),
               ),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                SystemNavigator.pop();
+              },
             ),
             const SizedBox(height: 20),
           ],
@@ -291,7 +298,7 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.map_outlined, size: 80, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    'Nenhuma caminhada registada',
+                    'Nenhuma caminhada registrada',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
@@ -345,7 +352,17 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: item['foto'] != null
-                              ? Image.network(item['foto'], fit: BoxFit.cover)
+                              ? Image.file(
+                                  File(item['foto']),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: AppColors.primary.withAlpha(20),
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                )
                               : Container(
                                   color: AppColors.primary.withAlpha(20),
                                   child: const Icon(
@@ -461,9 +478,11 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
       }
 
       Position position = await Geolocator.getCurrentPosition();
-      setState(() {
-        _pontoAtual = LatLng(position.latitude, position.longitude);
-      });
+      if (mounted) {
+        setState(() {
+          _pontoAtual = LatLng(position.latitude, position.longitude);
+        });
+      }
     } catch (e) {
       debugPrint("Erro GPS: $e");
     }
@@ -487,21 +506,25 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
             data['routes'][0]['geometry']['coordinates'] as List;
         final distance = (data['routes'][0]['distance'] as num).toDouble();
 
-        setState(() {
-          _rota = coordinates
-              .map((c) => LatLng(c[1] as double, c[0] as double))
-              .toList();
-          _distanciaMetros = distance;
-          _calorias = distance * 0.065;
-          _tempoMinutos = (distance / 83.3).round();
-        });
+        if (mounted) {
+          setState(() {
+            _rota = coordinates
+                .map((c) => LatLng(c[1] as double, c[0] as double))
+                .toList();
+            _distanciaMetros = distance;
+            _calorias = distance * 0.065;
+            _tempoMinutos = (distance / 83.3).round();
+          });
+        }
       }
     } catch (e) {
       debugPrint("Erro OSRM: $e");
     } finally {
-      setState(() {
-        _carregando = false;
-      });
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+        });
+      }
     }
   }
 
@@ -774,7 +797,7 @@ class _DetalhesCaminhadaScreenState extends State<DetalhesCaminhadaScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
-    if (image != null) {
+    if (image != null && mounted) {
       final appState = Provider.of<AppState>(context, listen: false);
       final item = Map<String, dynamic>.from(appState.caminhadas[widget.index]);
       item['foto'] = image.path;
@@ -787,73 +810,23 @@ class _DetalhesCaminhadaScreenState extends State<DetalhesCaminhadaScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final item = appState.caminhadas[widget.index];
-
-    final LatLng origem = LatLng(item['origem'][0], item['origem'][1]);
-    final LatLng destino = LatLng(item['destino'][0], item['destino'][1]);
-    final List<LatLng> rota = (item['rota'] as List)
-        .map((p) => LatLng((p as List)[0], p[1]))
+    final List rotaRaw = item['rota'] ?? [];
+    final List<LatLng> rotaPoints = rotaRaw
+        .map((e) => LatLng(e[0] as double, e[1] as double))
         .toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(item['titulo'] ?? 'Detalhes')),
-      body: Column(
-        children: [
-          GestureDetector(
-            onTap: _capturarFoto,
-            child: Container(
-              height: 200,
-              width: double.infinity,
-              color: Colors.grey[200],
-              child: item['foto'] != null
-                  ? Image.network(item['foto'], fit: BoxFit.cover)
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(
-                          Icons.add_a_photo_outlined,
-                          size: 48,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Toque para adicionar uma fotografia',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _metricTile(
-                  'Distância',
-                  '${(item['distancia'] as double).toStringAsFixed(0)}m',
-                ),
-                _metricTile('Tempo', '~${item['tempo']} min'),
-                _metricTile(
-                  'Calorias',
-                  '${(item['calorias'] as double).toStringAsFixed(0)} kcal',
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 250,
               child: FlutterMap(
-                options: MapOptions(initialCenter: origem, initialZoom: 14.5),
+                options: MapOptions(
+                  initialCenter: LatLng(item['origem'][0], item['origem'][1]),
+                  initialZoom: 14.0,
+                ),
                 children: [
                   TileLayer(
                     urlTemplate:
@@ -863,58 +836,41 @@ class _DetalhesCaminhadaScreenState extends State<DetalhesCaminhadaScreen> {
                   PolylineLayer(
                     polylines: [
                       Polyline(
-                        points: rota,
-                        strokeWidth: 5.0,
+                        points: rotaPoints,
+                        strokeWidth: 4.0,
                         color: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: origem,
-                        child: const Icon(
-                          Icons.my_location,
-                          color: AppColors.primary,
-                          size: 30,
-                        ),
-                      ),
-                      Marker(
-                        point: destino,
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.redAccent,
-                          size: 35,
-                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  if (item['foto'] != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        File(item['foto']),
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  else
+                    ElevatedButton.icon(
+                      onPressed: _capturarFoto,
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Adicionar Foto'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _metricTile(String titulo, String valor) {
-    return Column(
-      children: [
-        Text(
-          titulo,
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          valor,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
-        ),
-      ],
     );
   }
 }
