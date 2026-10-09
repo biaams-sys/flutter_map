@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #  App Caminhadas
 
 Aplicativo mobile desenvolvido em **Flutter** para rastreamento de caminhadas, cálculo de rotas em tempo real, contagem estimada de calorias e distância, e registro de fotografias do percurso com armazenamento local.
@@ -67,3 +68,21 @@ Você pode baixar e instalar a versão compilada do aplicativo diretamente pelo 
 ```
 
 ```
+=======
+#  App Caminhadas (Flutter)
+
+Aplicativo web desenvolvido em Flutter para registrar e acompanhar caminhadas, calculando rotas, distâncias, tempo e calorias[cite: 1].
+
+##  Tecnologias
+- **Flutter**
+- **Flutter Map & OSRM** (Mapas e Rotas)
+- **Geolocator** (GPS)
+
+##  Screenshots
+*prints*
+
+##  Como Executar
+```bash
+flutter pub get
+flutter run -d chrome
+>>>>>>> 1607395826a5c31f475ca342f9d25bca2d8b89b7
